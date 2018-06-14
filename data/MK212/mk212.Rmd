@@ -1,0 +1,516 @@
+---
+title: "R Notebook for effects of MK-212 on zebrafish alarm responses (LaNeC)"
+author:
+- Caio Maximino^[Universidade Federal do Sul e Sudeste do Pará]
+- Monica Gomes Lima-Maximino^[Universidade do Estado do Pará]
+- Rhayra Xavier do Carmo Silva^[Universidade Federal do Pará]
+
+output:
+  github_document 
+
+subtitle: From project "Role of serotonin on behavioral responses to alarm substance in zebrafish: A putative model for panic disorder"
+tags:
+- panic disorder
+- zebrafish
+- MK-212
+abstract: |
+  Behavioral data in the novel tank test during and after conspecific alarm substance (CAS) exposure  using MK-212 in zebrafish
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Data is produced by members from Laboratório de Neurociências e Comportamento "Frederico Guilherme Graeff", affiliated to Universidade Federal do Sul e Sudeste do Pará and Universidade do Estado do Pará. The package will include primary data for a behavioral experiment on the effects of MK-212 on zebrafish aggressive behavior. In Experiment 1, behavior during exposure was tested; in Experiment 2, behavior after exposure was tested.
+
+* Load needed libraries
+```{r}
+if(!require(ggplot2)){
+    install.packages("ggplot2")
+    library(ggplot2)
+}
+if(!require(coin)){
+    install.packages("coin")
+    library(coin)
+}
+if(!require(RCurl)){
+    install.packages("RCurl")
+    library(RCurl)
+}
+
+if(!require(plyr)){
+    install.packages("plyr")
+    library(plyr)
+}
+
+if(!require(rcompanion)){
+    install.packages("rcompanion")
+    library(rcompanion)
+}
+
+if(!require(WRS2)){
+    install.packages("WRS2")
+    library(WRS2)
+}
+
+if(!require(psych)){
+    install.packages("psych")
+    library(psych)
+}
+
+if(!require(stats)){
+    install.packages("stats")
+    library(stats)
+}
+```
+
+* Load data
+
+```{r}
+x1 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/MK212/mk212_during.csv")
+mk212_during <- read.csv(text = x1)
+mk212_during$Treatment <- as.factor(mk212_during$Treatment)
+mk212_during$Dose <- as.factor(mk212_during$Dose)
+View(mk212_during)
+
+x2 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/MK212/mk212_after.csv")
+mk212_after <- read.csv(text = x2)
+mk212_after$Treatment <- as.factor(mk212_after$Treatment)
+mk212_after$Dose <- as.factor(mk212_after$Dose)
+View(mk212_after)
+```
+
+* Detect outliers (based on time on bottom during exposure) and remove them
+```{r}
+gA <- mk212_during[c(1:10), ]
+median(gA$Time.Bottom) + 3*mad(gA$Time.Bottom)
+median(gA$Time.Bottom) - 3*mad(gA$Time.Bottom)
+#Animal 3 from group A (CAS + 0 mg/kg) identified as outlier; remove
+
+gB <- mk212_during[c(11:17), ]
+median(gB$Time.Bottom) + 3*mad(gB$Time.Bottom)
+median(gB$Time.Bottom) - 3*mad(gB$Time.Bottom)
+
+gC <- mk212_during[c(18:25), ]
+median(gC$Time.Bottom) + 3*mad(gC$Time.Bottom)
+median(gC$Time.Bottom) - 3*mad(gC$Time.Bottom)
+
+gD <- mk212_during[c(25:35), ]
+median(gD$Time.Bottom) + 3*mad(gD$Time.Bottom)
+median(gD$Time.Bottom) - 3*mad(gD$Time.Bottom)
+
+gE <- mk212_during[c(36:45), ]
+median(gE$Time.Bottom) + 3*mad(gE$Time.Bottom)
+median(gE$Time.Bottom) - 3*mad(gE$Time.Bottom)
+
+gF <- mk212_during[c(46:54), ]
+median(gF$Time.Bottom) + 3*mad(gF$Time.Bottom)
+median(gF$Time.Bottom) - 3*mad(gF$Time.Bottom)
+
+#Animal 3 from group A (CAS + 0 mg/kg) identified as outlier; remove from both data frames
+mk212_during.nooutlier <- mk212_during[-c(3), ]
+View(mk212_during.nooutlier)
+
+mk212_after.nooutlier <- mk212_after[-c(3), ]
+View(mk212_after.nooutlier)
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for Experiment 1
+
+1) Time on top
+1.1) Analysis
+```{r}
+anova.tt.during <- aov(Time.Top ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.tt.during)
+TukeyHSD(anova.tt.during)
+```
+
+1.2) Graphics
+```{r}
+TTInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Top))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Time.Top, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on top (s)", color = "Treatment")
+```
+
+2) Time on bottom
+2.1) Analysis
+```{r}
+anova.tb.during <- aov(Time.Bottom ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.tb.during)
+TukeyHSD(anova.tb.during)
+```
+
+2.2) Graphics
+```{r}
+TBInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Bottom))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Time.Bottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on bottom (s)", color = "Treatment")
+```
+
+3) Erratic swimming
+3.1) Analysis
+```{r}
+anova.es.during <- aov(Erratic.Swimming.N ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.es.during)
+TukeyHSD(anova.es.during)
+```
+
+3.2) Graphics
+```{r}
+ESInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Erratic.Swimming.N))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Erratic.Swimming.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Erratic swimming (N)", color = "Treatment")
+```
+
+4) Freezing (N)
+4.1) Analysis
+```{r}
+anova.frN.during <- aov(Freezing.N ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.frN.during)
+TukeyHSD(anova.frN.during)
+```
+
+4.2) Graphics
+```{r}
+FrNInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.N))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Freezing.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrNInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrNInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (N)", color = "Treatment")
+```
+
+5) Freezing (time)
+5.1) Analysis
+```{r}
+anova.frS.during <- aov(Freezing.S ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.frS.during)
+TukeyHSD(anova.frS.during)
+```
+
+5.2) Graphics
+```{r}
+FrSInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.S))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Freezing.S, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrSInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrSInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (s)", color = "Treatment")
+```
+
+6) Thrashing
+6.1) Analysis
+```{r}
+anova.thr.during <- aov(Thrashing ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.thr.during)
+TukeyHSD(anova.thr.during)
+```
+
+6.2) Graphics
+```{r}
+ThrInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Thrashing))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Thrashing, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ThrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ThrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Thrashing (N)", color = "Treatment")
+```
+
+7) Squares crossed
+7.1) Analysis
+```{r}
+anova.sqr.during <- aov(Squares.Crossed ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.sqr.during)
+TukeyHSD(anova.sqr.during)
+```
+
+7.2) Graphics
+```{r}
+SqrInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Squares.Crossed))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Squares.Crossed, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = SqrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = SqrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Squares crossed (N)", color = "Treatment")
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for Experiment 1
+
+1) Time on top
+1.1) Analysis
+```{r}
+anova.tt.during <- aov(Time.Top ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.tt.during)
+TukeyHSD(anova.tt.during)
+```
+
+1.2) Graphics
+```{r}
+TTInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Top))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Time.Top, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on top (s)", color = "Treatment")
+```
+
+2) Time on bottom
+2.1) Analysis
+```{r}
+anova.tb.during <- aov(Time.Bottom ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.tb.during)
+TukeyHSD(anova.tb.during)
+```
+
+2.2) Graphics
+```{r}
+TBInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Bottom))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Time.Bottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on bottom (s)", color = "Treatment")
+```
+
+3) Erratic swimming
+3.1) Analysis
+```{r}
+anova.es.during <- aov(Erratic.Swimming.N ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.es.during)
+TukeyHSD(anova.es.during)
+```
+
+3.2) Graphics
+```{r}
+ESInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Erratic.Swimming.N))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Erratic.Swimming.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Erratic swimming (N)", color = "Treatment")
+```
+
+4) Freezing (N)
+4.1) Analysis
+```{r}
+anova.frN.during <- aov(Freezing.N ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.frN.during)
+TukeyHSD(anova.frN.during)
+```
+
+4.2) Graphics
+```{r}
+FrNInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.N))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Freezing.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrNInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrNInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (N)", color = "Treatment")
+```
+
+5) Freezing (time)
+5.1) Analysis
+```{r}
+anova.frS.during <- aov(Freezing.S ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.frS.during)
+TukeyHSD(anova.frS.during)
+```
+
+5.2) Graphics
+```{r}
+FrSInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.S))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Freezing.S, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrSInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrSInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (s)", color = "Treatment")
+```
+
+6) Thrashing
+6.1) Analysis
+```{r}
+anova.thr.during <- aov(Thrashing ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.thr.during)
+TukeyHSD(anova.thr.during)
+```
+
+6.2) Graphics
+```{r}
+ThrInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Thrashing))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Thrashing, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ThrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ThrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Thrashing (N)", color = "Treatment")
+```
+
+7) Squares crossed
+7.1) Analysis
+```{r}
+anova.sqr.during <- aov(Squares.Crossed ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.sqr.during)
+TukeyHSD(anova.sqr.during)
+```
+
+7.2) Graphics
+```{r}
+SqrInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Squares.Crossed))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Squares.Crossed, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = SqrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = SqrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Squares crossed (N)", color = "Treatment")
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for Experiment 1
+
+1) Time on top
+1.1) Analysis
+```{r}
+anova.tt.during <- aov(Time.Top ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.tt.during)
+TukeyHSD(anova.tt.during)
+```
+
+1.2) Graphics
+```{r}
+TTInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Top))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Time.Top, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on top (s)", color = "Treatment")
+```
+
+2) Time on bottom
+2.1) Analysis
+```{r}
+anova.tb.during <- aov(Time.Bottom ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.tb.during)
+TukeyHSD(anova.tb.during)
+```
+
+2.2) Graphics
+```{r}
+TBInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Bottom))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Time.Bottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on bottom (s)", color = "Treatment")
+```
+
+3) Erratic swimming
+3.1) Analysis
+```{r}
+anova.es.during <- aov(Erratic.Swimming.N ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.es.during)
+TukeyHSD(anova.es.during)
+```
+
+3.2) Graphics
+```{r}
+ESInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Erratic.Swimming.N))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Erratic.Swimming.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Erratic swimming (N)", color = "Treatment")
+```
+
+4) Freezing (N)
+4.1) Analysis
+```{r}
+anova.frN.during <- aov(Freezing.N ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.frN.during)
+TukeyHSD(anova.frN.during)
+```
+
+4.2) Graphics
+```{r}
+FrNInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.N))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Freezing.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrNInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrNInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2")  + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (N)", color = "Treatment")
+```
+
+5) Freezing (time)
+5.1) Analysis
+```{r}
+anova.frS.during <- aov(Freezing.S ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.frS.during)
+TukeyHSD(anova.frS.during)
+```
+
+5.2) Graphics
+```{r}
+FrSInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.S))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Freezing.S, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrSInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrSInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (s)", color = "Treatment")
+```
+
+6) Thrashing
+6.1) Analysis
+```{r}
+anova.thr.during <- aov(Thrashing ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.thr.during)
+TukeyHSD(anova.thr.during)
+```
+
+6.2) Graphics
+```{r}
+ThrInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Thrashing))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Thrashing, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ThrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ThrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Thrashing (N)", color = "Treatment")
+```
+
+7) Squares crossed
+7.1) Analysis
+```{r}
+anova.sqr.during <- aov(Squares.Crossed ~ Treatment + Dose + Treatment:Dose, data = mk212_during.nooutlier)
+summary(anova.sqr.during)
+TukeyHSD(anova.sqr.during)
+```
+
+7.2) Graphics
+```{r}
+SqrInt <- ddply(mk212_during.nooutlier, .(Dose, Treatment), summarise, val = mean(Squares.Crossed))
+ggplot(mk212_during.nooutlier, aes(x = factor(Dose), y = Squares.Crossed, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = SqrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = SqrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set2") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Squares crossed (N)", color = "Treatment")
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for Experiment 2
+
+1) Time on top
+1.1) Analysis
+```{r}
+anova.tt.after <- aov(Time.Top ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.tt.after)
+TukeyHSD(anova.tt.after)
+```
+
+1.2) Graphics
+```{r}
+TTAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Top))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Time.Top, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TTAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TTAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on top (s)", color = "Treatment")
+```
+
+2) Time on bottom
+2.1) Analysis
+```{r}
+anova.tb.after <- aov(Time.Bottom ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.tb.after)
+TukeyHSD(anova.tb.after)
+```
+
+2.2) Graphics
+```{r}
+TBAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Time.Bottom))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Time.Bottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = TBAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Time on bottom (s)", color = "Treatment")
+```
+
+3) Erratic swimming
+3.1) Analysis
+```{r}
+anova.es.after <- aov(Erratic.Swimming.N ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.es.after)
+TukeyHSD(anova.es.after)
+```
+
+3.2) Graphics
+```{r}
+ESAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Erratic.Swimming.N))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Erratic.Swimming.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ESAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ESAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Erratic swimming (N)", color = "Treatment")
+```
+
+4) Freezing (N)
+4.1) Analysis
+```{r}
+anova.frN.after <- aov(Freezing.N ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.frN.after)
+TukeyHSD(anova.frN.after)
+```
+
+4.2) Graphics
+```{r}
+FrNAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.N))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Freezing.N, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrNAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrNAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (N)", color = "Treatment")
+```
+
+5) Freezing (time)
+5.1) Analysis
+```{r}
+anova.frS.after <- aov(Freezing.S ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.frS.after)
+TukeyHSD(anova.frS.after)
+```
+
+5.2) Graphics
+```{r}
+FrSAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Freezing.S))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Freezing.S, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrSAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrSAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75))  + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (s)", color = "Treatment")
+```
+
+6) Thrashing
+6.1) Analysis
+```{r}
+anova.thr.after <- aov(Thrashing ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.thr.after)
+TukeyHSD(anova.thr.after)
+```
+
+6.2) Graphics
+```{r}
+ThrAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Thrashing))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Thrashing, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = ThrAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ThrAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Thrashing (N)", color = "Treatment")
+```
+
+7) Squares crossed
+7.1) Analysis
+```{r}
+anova.sqr.after <- aov(Squares.Crossed ~ Treatment + Dose + Treatment:Dose, data = mk212_after.nooutlier)
+summary(anova.sqr.after)
+TukeyHSD(anova.sqr.after)
+```
+
+7.2) Graphics
+```{r}
+SqrAfter <- ddply(mk212_after.nooutlier, .(Dose, Treatment), summarise, val = mean(Squares.Crossed))
+ggplot(mk212_after.nooutlier, aes(x = factor(Dose), y = Squares.Crossed, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = SqrAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = SqrAfter, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + scale_color_brewer(palette = "Set1") + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Squares crossed (N)", color = "Treatment")
+```
