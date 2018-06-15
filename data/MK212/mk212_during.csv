@@ -1,7 +1,7 @@
 Subj,Treatment,Dose,Time.Top,Time.Bottom,Erratic.Swimming.N,Freezing.N,Freezing.S,Thrashing,Squares.Crossed
 A1,SA,0 mg/kg,0.549,359.081,5,1,343.803,0,9
 A2,SA,0 mg/kg,38.787,242.846,0,0,0,9,279
-A3,SA,0 mg/kg,168.672,99.379,0,0,0,14,449
+A3,SA,0 mg/kg,168.672,299.379,0,0,0,14,449
 A4,SA,0 mg/kg,1.433,329.973,1,1,163.979,6,89
 A5,SA,0 mg/kg,22.673,282.595,0,0,0,18,321
 A6,SA,0 mg/kg,0.329,359.42,0,0,0,0,31
