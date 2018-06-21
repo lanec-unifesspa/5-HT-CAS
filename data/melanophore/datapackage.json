@@ -1,0 +1,45 @@
+{
+  "profile": ["tabular-data-package"],
+  "resources": [
+    {
+      "path": ["https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/melanophore/melanophore_CAS.csv"],
+      "profile": ["tabular-data-resource"],
+      "encoding": ["utf-8"],
+      "name": ["melanophore"],
+      "format": ["csv"],
+      "mediatype": ["text/csv"],
+      "schema": {
+        "fields": [
+          {
+            "name": ["Group"],
+            "type": ["string"],
+            "format": ["default"]
+          },
+          {
+            "name": ["Subj"],
+            "type": ["string"],
+            "format": ["default"]
+          },
+          {
+            "name": ["Mean_gray"],
+            "type": ["number"],
+            "format": ["default"]
+          },
+          {
+            "name": ["Average_area"],
+            "type": ["number"],
+            "format": ["default"]
+          },
+          {
+            "name": ["percent_area"],
+            "type": ["number"],
+            "format": ["default"]
+          }
+        ],
+        "missingValues": [
+          [""]
+        ]
+      }
+    }
+  ]
+} 
