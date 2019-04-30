@@ -1,0 +1,1 @@
+Data is produced by members from Laboratório de Neurociências e Comportamento "Frederico Guilherme Graeff", affiliated to Universidade Federal do Sul e Sudeste do Pará and Universidade do Estado do Pará. The package includes primary data for a behavioral experiment on the effects of fluoxetine on zebrafish alarm reactions.
