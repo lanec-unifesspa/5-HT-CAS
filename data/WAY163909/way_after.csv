@@ -1,4 +1,4 @@
-Subj,Treatment,Drug,Time.Top,Time.Bottom,Erratic.Swimming.N,Freezing.S,Freezing.N,Thrashing,Squares.Crossed
+Subj,Treatment,Drug,Time.Top,Time.Bottom,Erratic.Swimming.N,Freezing.S,Freezing.N,Thrashing,Squares
 1,CTRL,VEH,20.641,127.540,328,0,0,0,23
 2,CTRL,VEH,0.233,246.937,317,0,0,1,1
 3,CTRL,VEH,118.538,251.851,513,0,0,0,0
