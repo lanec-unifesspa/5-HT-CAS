@@ -25,6 +25,10 @@ if(!require(ggplot2)){
     install.packages("ggplot2")
     library(ggplot2)
 }
+if(!require(grid)){
+    install.packages("grid")
+    library(grid)
+}
 if(!require(coin)){
     install.packages("coin")
     library(coin)
@@ -193,7 +197,9 @@ flxESplot <- ggplot(FLX_during_exposure.nooutlier, aes(x = Dose, y = AbsoluteTur
 
 flxSpplot <- ggplot(FLX_during_exposure.nooutlier, aes(x = Dose, y = Speed, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Set1") + theme_bw(base_size = 10) + ylab("Speed (cm/s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 11, label = "a") + annotate("text", x = 1.2, y = 11, label = "a") + annotate("text", x = 1.8, y = 11, label = "a") + annotate("text", x = 2.2, y = 11, label = "a") + annotate("text", x = 2.8, y = 11, label = "a") + annotate("text", x = 3.2, y = 11, label = "a")
 
-ggarrange(flxTTplot, flxTBplot, flxESplot, flxFrplot, flxSpplot, ncol = 3, nrow = 3, common.legend = TRUE, labels = c("A", "B", "C", "D", "E"), legend = "bottom")
+flx_during_plot <- ggarrange(flxTTplot, flxTBplot, flxESplot, flxFrplot, flxSpplot, ncol = 3, nrow = 2, common.legend = TRUE, labels = c("", "A", "B", "C", "D", "E"), legend = "bottom")
+
+annotate_figure(flx_during_plot, top = text_grob("Fluoxetine treatment - During exposure", color = "black", size = 14))
 ```
 
 * Run bootstrapped ANOVA for main and interaction effects on 2-way ANOVA, in data for observation AFTER CAS exposure (based on https://rcompanion.org/rcompanion/d_08a.html)
@@ -251,15 +257,17 @@ anova_Spafter <- pbad2way(Speed ~ Treatment + Dose + Treatment:Dose, data = FLX_
 
 * Produce figures on ggplot2
 ```{r}
-flxTTplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Time_On_Top, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 400) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Time on top third (s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 120, label = "a") + annotate("text", x = 1.2, y = 50, label = "b") + annotate("text", x = 1.8, y = 160, label = "ac") + annotate("text", x = 2.2, y = 370, label = "abc") + annotate("text", x = 2.8, y = 130, label = "c") + annotate("text", x = 3.2, y = 130, label = "ac") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed")
+flxTTplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Time_On_Top, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 400) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Time on top third (s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 120, label = "a") + annotate("text", x = 1.2, y = 50, label = "b") + annotate("text", x = 1.8, y = 160, label = "ac") + annotate("text", x = 2.2, y = 370, label = "abcd") + annotate("text", x = 2.8, y = 130, label = "cd") + annotate("text", x = 3.2, y = 80, label = "d") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed")
 
-flxTBplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Time_On_Bottom, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 400) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Time on bottom third (s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 320, label = "a") + annotate("text", x = 1.2, y = 380, label = "b") + annotate("text", x = 1.8, y = 370, label = "a") + annotate("text", x = 2.2, y = 380, label = "ab") + annotate("text", x = 2.8, y = 330, label = "a") + annotate("text", x = 3.2, y = 350, label = "a") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed")
+flxTBplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Time_On_Bottom, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 400) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Time on bottom third (s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 320, label = "a") + annotate("text", x = 1.2, y = 380, label = "b") + annotate("text", x = 1.8, y = 370, label = "a") + annotate("text", x = 2.2, y = 380, label = "ab") + annotate("text", x = 2.8, y = 330, label = "a") + annotate("text", x = 3.2, y = 370, label = "a") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed")
 
 flxESplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = AbsoluteTurnAngle, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Absolute Turn Angle (º)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 65, label = "a") + annotate("text", x = 1.2, y = 65, label = "a") + annotate("text", x = 1.8, y = 60, label = "a") + annotate("text", x = 2.2, y = 55, label = "a") + annotate("text", x = 2.8, y = 62, label = "a") + annotate("text", x = 3.2, y = 58, label = "a")
 
-flxFrplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Freezing, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Freezing (s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 26, label = "a") + annotate("text", x = 1.2, y = 60, label = "b") + annotate("text", x = 1.8, y = 12, label = "c") + annotate("text", x = 2.2, y = 58, label = "b") + annotate("text", x = 2.8, y = 12, label = "c") + annotate("text", x = 3.2, y = 56, label = "b")
+flxFrplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Freezing, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Freezing (s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 26, label = "a") + annotate("text", x = 1.2, y = 60, label = "b") + annotate("text", x = 1.8, y = 12, label = "c") + annotate("text", x = 2.2, y = 58, label = "b") + annotate("text", x = 2.8, y = 12, label = "c") + annotate("text", x = 3.2, y = 100, label = "d")
 
 flxSpplot2 <- ggplot(FLX_after_exposure.nooutlier, aes(x = Dose, y = Speed, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Speed (cm/s)") + xlab("Fluoxetine dose (mg/kg)") + annotate("text", x = 0.8, y = 15, label = "a") + annotate("text", x = 1.2, y = 15, label = "a") + annotate("text", x = 1.8, y = 15, label = "a") + annotate("text", x = 2.2, y = 15, label = "a") + annotate("text", x = 2.8, y = 15, label = "a") + annotate("text", x = 3.2, y = 15, label = "a")
 
-ggarrange(blank, flxTTplot2, flxTBplot2, flxESplot2, flxFrplot2, flxSpplot, ncol = 3, nrow = 2, common.legend = TRUE, labels = c("", "A", "B", "C", "E"), legend = "bottom")
+flx_after_plot <- ggarrange(blank, flxTTplot2, flxTBplot2, flxESplot2, flxFrplot2, flxSpplot2, ncol = 3, nrow = 2, common.legend = TRUE, labels = c("", "A", "B", "C", "E"), legend = "bottom")
+
+annotate_figure(flx_after_plot, top = text_grob("Fluoxetine treatment - After exposure", color = "black", size = 14))
 ```
