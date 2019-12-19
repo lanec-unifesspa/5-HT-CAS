@@ -1,4 +1,4 @@
-Subj,Treatment,Drug,Time_On_Top,Time_On_Bottom,AbsoluteTurnAngle,Speed,Freezing
+Subj,Treatment,Dose,Time_On_Top,Time_On_Bottom,AbsoluteTurnAngle,Speed,Freezing
 1,CTRL,0,14.44,163.926,22.9149099337732,3.51455797932062,2
 2,CTRL,0,13.22,297.308,4.78035066695809,4.87376937855418,23
 3,CTRL,0,14.41,291.819,25.3328280205702,4.96584906784851,9
