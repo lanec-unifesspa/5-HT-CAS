@@ -78,12 +78,12 @@ PCPA_during_exposure$Treatment <- factor(PCPA_during_exposure$Treatment, levels 
 PCPA_during_exposure$Dose <- factor(PCPA_during_exposure$Dose, levels = c("0", "150 (2 inj.)"))
 View(PCPA_during_exposure)
 
-x2 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/PCPA/PCPA_after.csv")
-CLZ_after_exposure <- read.csv(text = x2)
+x2 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/PCPA/PCPA_after_exposure.csv")
+PCPA_after_exposure <- read.csv(text = x2)
 # Ensure factor variables are interpreted as such
-CLZ_after_exposure$Treatment <- factor(CLZ_after_exposure$Treatment, levels = c("CTRL", "CAS"))
-CLZ_after_exposure$Dose <- factor(CLZ_after_exposure$Dose, levels = c("VEH", "pCPA"))
-View(CLZ_after_exposure)
+PCPA_after_exposure$Treatment <- factor(PCPA_after_exposure$Treatment, levels = c("CTRL", "CAS"))
+PCPA_after_exposure$Dose <- factor(PCPA_after_exposure$Dose, levels = c("0", "150 (2 inj.)"))
+View(PCPA_after_exposure)
 ```
 
 * Detect and remove outliers, based on median absolute deviations
@@ -278,7 +278,7 @@ pcpaESplot2 <- ggplot(PCPA_after_exposure, aes(x = Dose, y = AbsoluteTurnAngle, 
 
 pcpaFrplot2 <- ggplot(PCPA_after_exposure, aes(x = Dose, y = Freezing, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Freezing (s)") + xlab("pCPA dose (mg/kg)") + annotate("text", x = 0.8, y = 230, label = "ab") + annotate("text", x = 1.2, y = 250, label = "c") + annotate("text", x = 1.8, y = 40, label = "a") + annotate("text", x = 2.2, y = 60, label = "b")
 
-pcpaSpplot2 <- ggplot(PCPA_after_exposure, aes(x = Dose, y = Speed, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Speed (cm/s)") + xlab("pCPA dose (mg/kg)") + annotate("text", x = 0.8, y = 13, label = "a") + annotate("text", x = 1.2, y = 9, label = "a") + annotate("text", x = 1.8, y = 10, label = "a") + annotate("text", x = 2.2, y = 9, label = "a")
+pcpaSpplot2 <- ggplot(PCPA_after_exposure, aes(x = Dose, y = Speed, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Speed (cm/s)") + xlab("pCPA dose (mg/kg)") + annotate("text", x = 0.8, y = 16, label = "a") + annotate("text", x = 1.2, y = 16, label = "a") + annotate("text", x = 1.8, y = 17, label = "a") + annotate("text", x = 2.2, y = 17, label = "a")
 
 pcpa_after_plot <- ggarrange(filler, pcpaTTplot2, pcpaTBplot2, pcpaESplot2, pcpaFrplot2, pcpaSpplot2, ncol = 3, nrow = 2, common.legend = TRUE, labels = c("","A", "B", "C", "D", "E"), legend = "bottom")
 
