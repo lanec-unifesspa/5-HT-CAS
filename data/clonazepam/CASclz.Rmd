@@ -1,0 +1,283 @@
+---
+title: "R Notebook for effects of clonazepam on zebrafish alarm reactions (LaNeC)"
+author:
+- Caio Maximino^[Universidade Federal do Sul e Sudeste do Pará]
+- Monica Gomes Lima^[Universidade do Estado do Pará]
+- Sueslene Prado Rocha^[Universidade do Estado do Pará]
+output:
+  github_document 
+subtitle: From project "Role of serotonin on behavioral responses to alarm substance in zebrafish: A putative model for panic disorder" (DOI: 10.17605/OSF.IO/BK85D)
+tags:
+- fear
+- zebrafish
+- metergoline
+abstract: |
+  Behavioral data during and after exposure to conspecific alarm substance in zebrafish treated with clonazepam (0.05 mg/kg)
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook for the  library
+
+When you execute code within the notebook, the results appear beneath the code. 
+
+* Load needed libraries:
+```{r}
+if(!require(ggplot2)){
+    install.packages("ggplot2")
+    library(ggplot2)
+}
+if(!require(coin)){
+    install.packages("coin")
+    library(coin)
+}
+if(!require(RCurl)){
+    install.packages("RCurl")
+    library(RCurl)
+}
+
+if(!require(plyr)){
+    install.packages("plyr")
+    library(plyr)
+}
+
+if(!require(rcompanion)){
+    install.packages("rcompanion")
+    library(rcompanion)
+}
+
+if(!require(WRS2)){
+    install.packages("WRS2")
+    library(WRS2)
+}
+
+if(!require(psych)){
+    install.packages("psych")
+    library(psych)
+}
+
+if(!require(multcompView)){
+    install.packages("multcompView")
+    library(multcompView)
+}
+
+if(!require(ggpubr)){
+    install.packages("ggpubr")
+    library(ggpubr)
+}
+```
+
+* Load data
+```{r}
+x1 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/clonazepam/CLZ_during.csv")
+CLZ_during_exposure <- read.csv(text = x1)
+# Ensure factor variables are interpreted as such
+CLZ_during_exposure$Treatment <- factor(CLZ_during_exposure$Treatment, levels = c("CTRL", "CAS"))
+CLZ_during_exposure$Dose <- factor(CLZ_during_exposure$Dose, levels = c("0", "0.05"))
+View(CLZ_during_exposure)
+
+x2 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/clonazepam/CLZ_after.csv")
+CLZ_after_exposure <- read.csv(text = x2)
+# Ensure factor variables are interpreted as such
+CLZ_after_exposure$Treatment <- factor(CLZ_after_exposure$Treatment, levels = c("CTRL", "CAS"))
+CLZ_after_exposure$Dose <- factor(CLZ_after_exposure$Dose, levels = c("0", "0.05"))
+View(CLZ_after_exposure)
+```
+
+* Detect and remove outliers, based on median absolute deviations
+```{r}
+gA <- CLZ_during_exposure[c(1:15), ]
+median(gA$Time_On_Bottom) + 3*mad(gA$Time_On_Bottom)
+median(gA$Time_On_Bottom) - 3*mad(gA$Time_On_Bottom)
+#Subject A1-2 is an outlier
+gB <- CLZ_during_exposure[c(16:30), ]
+median(gB$Time_On_Bottom) + 3*mad(gB$Time_On_Bottom)
+median(gB$Time_On_Bottom) - 3*mad(gB$Time_On_Bottom)
+#No outliers
+gC <- CLZ_during_exposure[c(31:45), ]
+median(gC$Time_On_Bottom) + 3*mad(gC$Time_On_Bottom)
+median(gC$Time_On_Bottom) - 3*mad(gC$Time_On_Bottom)
+#Subject B1-3 is an outlier
+gD <- CLZ_during_exposure[c(45:60), ]
+median(gD$Time_On_Bottom) + 3*mad(gD$Time_On_Bottom)
+median(gD$Time_On_Bottom) - 3*mad(gD$Time_On_Bottom)
+#No outliers
+#Remove outliers
+CLZ_during_exposure <- CLZ_during_exposure[-c(2, 33), ]
+CLZ_after_exposure <- CLZ_after_exposure[-c(2, 33), ]
+```
+
+* Run bootstrapped ANOVA for main and interaction effects on 2-way ANOVA, in data for observation DURING CAS exposure (based on https://rcompanion.org/rcompanion/d_08a.html)
+
+-Create seed for computational reproducibility
+```{r}
+set.seed(42)
+```
+
+-Create interaction variable for pairwise permutation tests (post-hoc tests); the created variable will be used across all tests
+```{r}
+CLZ_during_exposure$CLZ_during_exposure.int <- interaction(CLZ_during_exposure$Treatment, CLZ_during_exposure$Dose)
+CLZ_during_exposure$CLZ_during_exposure.int <- factor(CLZ_during_exposure$CLZ_during_exposure.int, levels = c("CTRL.0", "CAS.0", "CTRL.0.05", "CAS.0.05"))
+```
+
+A1) Time on top
+```{r}
+anova_TT <- pbad2way(Time_On_Top ~ Treatment + Dose + Treatment:Dose, data = CLZ_during_exposure, est = "mom", nboot = 5000)
+```
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+postTT <- mcp2a(Time_On_Top ~ Treatment + Dose + Treatment:Dose, data = CLZ_during_exposure, est = "mom", nboot = 5000)
+PTTT <- pairwisePermutationTest(Time_On_Top ~ CLZ_during_exposure.int, data = CLZ_during_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTTT
+cldList(comparison = PTTT$Comparison, p.value = PTTT$p.adjust, threshold = 0.05)
+```
+
+A2) Time on bottom
+```{r}
+anova_TB <- pbad2way(Time_On_Bottom ~ Treatment + Dose + Treatment:Dose, data = CLZ_during_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTTB <- pairwisePermutationTest(Time_On_Bottom ~ CLZ_during_exposure.int, data = CLZ_during_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTTB
+cldList(comparison = PTTB$Comparison, p.value = PTTB$p.adjust, threshold = 0.05)
+```
+
+A3) Absolute turn angle
+```{r}
+anova_ES <- pbad2way(AbsoluteTurnAngle ~ Treatment + Dose + Treatment:Dose, data = CLZ_during_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTEn <- pairwisePermutationTest(AbsoluteTurnAngle ~ CLZ_during_exposure.int, data = CLZ_during_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTEn
+cldList(comparison = PTEn$Comparison, p.value = PTEn$p.adjust, threshold = 0.05)
+```
+
+A4) Freezing
+```{r}
+anova_Fr <- pbad2way(Freezing ~ Treatment + Dose + Treatment:Dose, data = CLZ_during_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTFR <- pairwisePermutationTest(Freezing ~ CLZ_during_exposure.int, data = CLZ_during_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTFR
+cldList(comparison = PTFR$Comparison, p.value = PTFR$p.adjust, threshold = 0.05)
+```
+
+A5) Speed
+```{r}
+anova_Sp <- pbad2way(Speed ~ Treatment + Dose + Treatment:Dose, data = CLZ_during_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTSp <- pairwisePermutationTest(Speed ~ CLZ_during_exposure.int, data = CLZ_during_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTSp
+cldList(comparison = PTSp$Comparison, p.value = PTSp$p.adjust, threshold = 0.05)
+```
+
+
+* Produce figures on ggplot2
+```{r}
+clzTTplot <- ggplot(CLZ_during_exposure, aes(x = Dose, y = Time_On_Top, fill = Treatment)) +  geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 360) + scale_fill_brewer(palette = "Set1") + ylab("Time on top third (s)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 130, label = "a") + annotate("text", x = 1.2, y = 30, label = "b") + annotate("text", x = 1.8, y = 110, label = "a") + annotate("text", x = 2.2, y = 130, label = "a") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed") + theme_bw()
+
+clzTBplot <- ggplot(CLZ_during_exposure, aes(x = Dose, y = Time_On_Bottom, fill = Treatment)) +  geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 380) + scale_fill_brewer(palette = "Set1") +  ylab("Time on bottom third (s)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 310, label = "a") + annotate("text", x = 1.2, y = 380, label = "b") + annotate("text", x = 1.8, y = 310, label = "a") + annotate("text", x = 2.2, y = 300, label = "a") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed") + theme_bw()
+
+clzESplot <- ggplot(CLZ_during_exposure, aes(x = Dose, y = AbsoluteTurnAngle, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Set1") + ylim(0, 60) + ylab("Absolute Turn Angle (º)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 28, label = "a") + annotate("text", x = 1.2, y = 60, label = "b") + annotate("text", x = 1.8, y = 28, label = "a") + annotate("text", x = 2.2, y = 30, label = "a") + theme_bw()
+
+clzFrplot <- ggplot(CLZ_during_exposure, aes(x = Dose, y = Freezing, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Set1") + theme_bw() + ylab("Freezing (s)") + xlab("Metergoline dose (mg/kg)") + annotate("text", x = 0.8, y = 25, label = "a") + annotate("text", x = 1.2, y = 100, label = "b") + annotate("text", x = 1.8, y = 23, label = "a") + annotate("text", x = 2.2, y = 40, label = "c")
+
+clzSpplot <- ggplot(CLZ_during_exposure, aes(x = Dose, y = Speed, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Set1") + theme_bw() + ylab("Speed (cm/s)") + xlab("Metergoline dose (mg/kg)") + annotate("text", x = 0.8, y = 17.5, label = "a") + annotate("text", x = 1.2, y = 19.5, label = "a") + annotate("text", x = 1.8, y = 14.5, label = "a") + annotate("text", x = 2.2, y = 14.5, label = "a")
+
+filler <- ggplot() + theme_void() #create blank space to insert image
+
+clz_during_plot <- ggarrange(filler, clzTTplot, clzTBplot, clzESplot, clzFrplot, clzSpplot, ncol = 3, nrow = 2, common.legend = TRUE, labels = c("", "A", "B", "C", "D", "E"), legend = "bottom")
+
+annotate_figure(clz_during_plot, top = text_grob("Clonazepam treatment - During exposure", color = "black", size = 14))
+```
+
+* Run bootstrapped ANOVA for main and interaction effects on 2-way ANOVA, in data for observation AFTER CAS exposure (based on https://rcompanion.org/rcompanion/d_08a.html)
+
+-Create interaction variable for pairwise permutation tests (post-hoc tests); the created variable will be used across all tests
+```{r}
+CLZ_after_exposure$CLZ_after_exposure.int <- interaction(CLZ_after_exposure$Treatment, CLZ_after_exposure$Dose)
+CLZ_after_exposure$CLZ_after_exposure.int <- factor(CLZ_after_exposure$CLZ_after_exposure.int, levels = c("CTRL.0", "CAS.0", "CTRL.0.05", "CAS.0.05"))
+```
+
+B1) Time on top
+```{r}
+anova_TT2 <- pbad2way(Time_On_Top ~ Treatment + Dose + Treatment:Dose, data = CLZ_after_exposure, est = "mom", nboot = 5000)
+```
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTTT2 <- pairwisePermutationTest(Time_On_Top ~ CLZ_after_exposure.int, data = CLZ_after_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTTT2
+cldList(comparison = PTTT2$Comparison, p.value = PTTT2$p.adjust, threshold = 0.05)
+```
+
+B2) Time on bottom
+```{r}
+anova_TB2 <- pbad2way(Time_On_Bottom ~ Treatment + Dose + Treatment:Dose, data = CLZ_after_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTTB2 <- pairwisePermutationTest(Time_On_Bottom ~ CLZ_after_exposure.int, data = CLZ_after_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTTB2
+cldList(comparison = PTTB2$Comparison, p.value = PTTB2$p.adjust, threshold = 0.05)
+```
+
+B3) Absolute Turn Angle
+```{r}
+anova_ES2 <- pbad2way(AbsoluteTurnAngle ~ Treatment + Dose + Treatment:Dose, data = CLZ_after_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTES2 <- pairwisePermutationTest(AbsoluteTurnAngle ~ CLZ_after_exposure.int, data = CLZ_after_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTES2
+cldList(comparison = PTES2$Comparison, p.value = PTES2$p.adjust, threshold = 0.05)
+```
+
+B4) Freezing
+```{r}
+anova_Fr2 <- pbad2way(Freezing ~ Treatment + Dose + Treatment:Dose, data = CLZ_after_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTFr2 <- pairwisePermutationTest(Freezing ~ CLZ_after_exposure.int, data = CLZ_after_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTFr2
+cldList(comparison = PTFr2$Comparison, p.value = PTFr2$p.adjust, threshold = 0.05)
+```
+
+B5) Swimming speed
+```{r}
+anova_Sp2 <- pbad2way(Speed ~ Treatment + Dose + Treatment:Dose, data = CLZ_after_exposure, est = "mom", nboot = 5000)
+```
+
+-Post-hoc tests (pairwise permutation tests on modified M-estimators, with 5000 bootstrap samples)
+```{r}
+PTSp2 <- pairwisePermutationTest(Speed ~ CLZ_after_exposure.int, data = CLZ_after_exposure, est = "mom", nboot = 5000, method = "fdr")
+PTSp2
+cldList(comparison = PTSp2$Comparison, p.value = PTSp2$p.adjust, threshold = 0.05)
+```
+
+* Produce figures on ggplot2
+```{r}
+clzTTplot2 <- ggplot(CLZ_after_exposure, aes(x = Dose, y = Time_On_Top, fill = Treatment)) +  geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 360) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Time on top third (s)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 100, label = "a") + annotate("text", x = 1.2, y = 50, label = "b") + annotate("text", x = 1.8, y = 110, label = "a") + annotate("text", x = 2.2, y = 110, label = "a") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed")
+
+clzTBplot2 <- ggplot(CLZ_after_exposure, aes(x = Dose, y = Time_On_Bottom, fill = Treatment)) +  geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + ylim(0, 380) + scale_fill_brewer(palette = "Accent") + theme_bw(base_size = 10) + ylab("Time on bottom third (s)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 315, label = "a") + annotate("text", x = 1.2, y = 365, label = "b") + annotate("text", x = 1.8, y = 310, label = "a") + annotate("text", x = 2.2, y = 300, label = "a") + geom_hline(yintercept = 120, color = 'coral', linetype = "dashed")
+
+clzESplot2 <- ggplot(CLZ_after_exposure, aes(x = Dose, y = AbsoluteTurnAngle, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Absolute Turn Angle (º)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 38, label = "a") + annotate("text", x = 1.2, y = 47, label = "a") + annotate("text", x = 1.8, y = 40, label = "a") + annotate("text", x = 2.2, y = 55, label = "a") + ylim(0, 60)
+
+clzFrplot2 <- ggplot(CLZ_after_exposure, aes(x = Dose, y = Freezing, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Freezing (s)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 10, label = "a") + annotate("text", x = 1.2, y = 115, label = "b") + annotate("text", x = 1.8, y = 55, label = "c") + annotate("text", x = 2.2, y = 33, label = "a")
+
+clzSpplot2 <- ggplot(CLZ_after_exposure, aes(x = Dose, y = Speed, fill = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(pch = 21, position = position_jitterdodge(), alpha = 0.5) + scale_fill_brewer(palette = "Accent") + theme_bw() + ylab("Speed (cm/s)") + xlab("Clonazepam dose (mg/kg)") + annotate("text", x = 0.8, y = 18, label = "a") + annotate("text", x = 1.2, y = 20, label = "a") + annotate("text", x = 1.8, y = 17, label = "a") + annotate("text", x = 2.2, y = 19, label = "a")
+
+clz_after_plot <- ggarrange(filler, clzTTplot2, clzTBplot2, clzESplot2, clzFrplot2, clzSpplot2, ncol = 3, nrow = 2, common.legend = TRUE, labels = c("","A", "B", "C", "D", "E"), legend = "bottom")
+
+annotate_figure(clz_after_plot, top = text_grob("Clonazepam treatment - After exposure", color = "black", size = 14))
+```
