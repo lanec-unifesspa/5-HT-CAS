@@ -1,4 +1,4 @@
-Subj,Treatment,Drug,Time.Bottom,Time.Top,AbsoluteTurnAngle,Freezing,Speed
+Subj,Treatment,Dose,Time.Bottom,Time.Top,AbsoluteTurnAngle,Freezing,Speed
 A1,CTRL,0,"282,205941","37,880752","15,6800518909091",1,"6,19050605660378"
 A2,CTRL,0,"208,246011","132,386291","20,3838250926431",2,"6,68507468010753"
 A3,CTRL,0,"94,419539","221,256051","20,013154880597",3,"4,50941141690141"
