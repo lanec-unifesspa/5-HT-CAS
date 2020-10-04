@@ -1,0 +1,305 @@
+---
+title: "R Notebook for effects of RS-10221 on zebrafish alarm responses (LaNeC)"
+author:
+- Caio Maximino^[Universidade Federal do Sul e Sudeste do Pará]
+- Monica Gomes Lima-Maximino^[Universidade do Estado do Pará]
+- Rhayra Xavier do Carmo Silva^[Universidade Federal do Pará]
+
+output:
+  github_document 
+
+subtitle: From project "Role of serotonin on behavioral responses to alarm substance in zebrafish: A putative model for panic disorder"
+tags:
+- panic disorder
+- zebrafish
+- MK-212
+abstract: |
+  Behavioral data in the novel tank test during and after conspecific alarm substance (CAS) exposure using RS10221 in zebrafish
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Data is produced by members from Laboratório de Neurociências e Comportamento "Frederico Guilherme Graeff", affiliated to Universidade Federal do Sul e Sudeste do Pará and Universidade do Estado do Pará. The package will include primary data for a behavioral experiment on the effects of RS10221 on zebrafish fear-like behavior. In Experiment 1, behavior during exposure was tested; in Experiment 2, behavior after exposure was tested.
+
+* Load needed libraries
+```{r}
+if(!require(ggplot2)){
+    install.packages("ggplot2")
+    library(ggplot2)
+}
+if(!require(coin)){
+    install.packages("coin")
+    library(coin)
+}
+if(!require(RCurl)){
+    install.packages("RCurl")
+    library(RCurl)
+}
+
+if(!require(plyr)){
+    install.packages("plyr")
+    library(plyr)
+}
+
+if(!require(rcompanion)){
+    install.packages("rcompanion")
+    library(rcompanion)
+}
+
+if(!require(WRS2)){
+    install.packages("WRS2")
+    library(WRS2)
+}
+
+if(!require(psych)){
+    install.packages("psych")
+    library(psych)
+}
+
+if(!require(stats)){
+    install.packages("stats")
+    library(stats)
+}
+
+if(!require(sjtats)){
+    library(devtools)
+    devtools::install_github("strengejacke/sjstats")
+    library(sjtats)
+}
+
+if(!require(multcompView)){
+    install.packages("multcompView")
+    library(multcompView)
+}
+
+if(!require(ggpubr)){
+    install.packages("ggpubr")
+    library(ggpubr)
+}
+```
+
+* Load data
+
+```{r}
+x1 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/5HT2C/RS10221/RS_during.csv")
+RS_during <- read.csv(text = x1)
+RS_during$Treatment <- factor(RS_during$Treatment, levels = c("CTRL", "CAS"))
+RS_during$Dose <- as.factor(RS_during$Dose)
+View(RS_during)
+
+x2 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/5-HT-CAS/master/data/5HT2C/RS10221/RS_after.csv")
+RS_after <- read.csv(text = x2)
+RS_after$Treatment <- factor(RS_after$Treatment, levels = c("CTRL", "CAS"))
+RS_after$Dose <- as.factor(RS_after$Dose)
+View(RS_after)
+```
+
+* Detect outliers (based on time on bottom during exposure) and remove them, using a 3.5xMAD rule
+```{r}
+gA <- RS_during[c(1:10), ]
+median(gA$TimeBottom) + 3.5*mad(gA$TimeBottom)
+median(gA$TimeBottom) - 3.5*mad(gA$TimeBottom)
+#Subjects A2 and A16 identified as outlier; remove
+
+gB <- RS_during[c(11:30), ]
+median(gB$TimeBottom) + 3.5*mad(gB$TimeBottom)
+median(gB$TimeBottom) - 3.5*mad(gB$TimeBottom)
+
+gC <- RS_during[c(31:51), ]
+median(gC$TimeBottom) + 3.5*mad(gC$TimeBottom)
+median(gC$TimeBottom) - 3.5*mad(gC$TimeBottom)
+
+
+gD <- RS_during[c(52:72), ]
+median(gD$TimeBottom) + 3.5*mad(gD$TimeBottom)
+median(gD$TimeBottom) - 3.5*mad(gD$TimeBottom)
+#No outliers
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for Experiment 1
+
+1) Time on top
+1.1) Analysis
+```{r}
+anova.tt.during <- aov(TimeTop ~ Treatment + Dose + Treatment:Dose, data = RS_during) #run type I ANOVA
+summary(anova.tt.during) #summarize ANOVA results
+omega_sq(anova.tt.during) #Calculate effect size (omega-squared)
+cohens_f(anova.tt.during) #Calculate effect size (Cohen's f-squared)
+PTTT_during <- TukeyHSD(anova.tt.during) #run Tukey's HSD post hoc test
+multcompLetters(PTTT_during$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+1.2) Graphics
+```{r}
+TTInt <- ddply(RS_during, .(Dose, Treatment), summarise, val = mean(TimeTop))
+TTplotDur <- ggplot(RS_during, aes(x = factor(Dose), y = TimeTop, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + ylim(0, 360) + geom_line(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + geom_hline(yintercept = 120, linetype = "dashed", color = "gray") + labs(x = "Dose", y = "Time on top (s)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 80, label = "ab")  +  annotate(geom = "text", x = 1.2, y = 85, label = "a")  + annotate(geom = "text", x = 1.8, y = 105, label = "b")  + annotate(geom = "text", x = 2.2, y = 95, label = "ab") 
+```
+
+2) Time on bottom
+2.1) Analysis
+```{r}
+anova.tb.during <- aov(TimeBottom ~ Treatment + Dose + Treatment:Dose, data = RS_during) #run type I ANOVA
+summary(anova.tb.during) #summarize ANOVA results
+omega_sq(anova.tb.during) #Calculate effect size (omega-squared)
+cohens_f(anova.tb.during) #Calculate effect size (Cohen's f-squared)
+PTTB_during <- TukeyHSD(anova.tb.during) #run Tukey's HSD post hoc test
+multcompLetters(PTTB_during$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+2.2) Graphics
+```{r}
+TBInt <- ddply(RS_during, .(Dose, Treatment), summarise, val = mean(TimeBottom))
+TBplotDur <- ggplot(RS_during, aes(x = factor(Dose), y = TimeBottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + ylim(0, 380) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + geom_hline(yintercept = 120, linetype = "dashed", color = "gray") + labs(x = "Drug", y = "Time on bottom (s)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 290, label = "b")  +  annotate(geom = "text", x = 1.2, y = 370, label = "a")  + annotate(geom = "text", x = 1.8, y = 270, label = "b")  + annotate(geom = "text", x = 2.2, y = 370, label = "a") 
+```
+
+3) Erratic swimming
+3.1) Analysis
+```{r}
+anova.es.during <- aov(AbsoluteTurnAngle ~ Treatment + Dose + Treatment:Dose, data = RS_during) #run type I ANOVA
+summary(anova.es.during) #summarize ANOVA results
+omega_sq(anova.es.during) #Calculate effect size (omega-squared)
+cohens_f(anova.es.during) #Calculate effect size (Cohen's f-squared)
+PTES_during <- TukeyHSD(anova.es.during) #run Tukey's HSD post hoc test
+multcompLetters(PTES_during$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+3.2) Graphics
+```{r}
+ESInt <- ddply(RS_during, .(Dose, Treatment), summarise, val = mean(AbsoluteTurnAngle))
+ESplotDur <- ggplot(RS_during, aes(x = factor(Dose), y = AbsoluteTurnAngle, colour = Treatment)) + ylim(0, 80) + geom_boxplot(outlier.shape = NA) + geom_point(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Drug", y = "Erratic swimming \n(Abs. Turn Angle)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 35, label = "b")  +  annotate(geom = "text", x = 1.2, y = 65, label = "a")  + annotate(geom = "text", x = 1.8, y = 50, label = "b")  + annotate(geom = "text", x = 2.2, y = 80, label = "a") 
+```
+
+4) Freezing
+4.1) Analysis
+```{r}
+anova.fr.during <- aov(Freezing ~ Treatment + Dose + Treatment:Dose, data = RS_during) #run type I ANOVA
+summary(anova.fr.during) #summarize ANOVA results
+omega_sq(anova.fr.during) #Calculate effect size (omega-squared)
+cohens_f(anova.fr.during) #Calculate effect size (Cohen's f-squared)
+PTFR_during <- TukeyHSD(anova.fr.during) #run Tukey's HSD post hoc test
+multcompLetters(PTFR_during$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+4.2) Graphics
+```{r}
+FrInt <- ddply(RS_during, .(Dose, Treatment), summarise, val = mean(Freezing))
+FrplotDur <- ggplot(RS_during, aes(x = factor(Dose), y = Freezing, colour = Treatment)) + ylim (0, 360) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (s)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 50, label = "b")  +  annotate(geom = "text", x = 1.2, y = 230, label = "a")  + annotate(geom = "text", x = 1.8, y = 90, label = "b")  + annotate(geom = "text", x = 2.2, y = 170, label = "c") 
+```
+
+
+5) Speed
+5.1) Analysis
+```{r}
+anova.sp.during <- aov(Speed ~ Treatment + Dose + Treatment:Dose, data = RS_during) #run type I ANOVA
+summary(anova.sp.during) #summarize ANOVA results
+omega_sq(anova.sp.during) #Calculate effect size (omega-squared)
+cohens_f(anova.sp.during) #Calculate effect size (Cohen's f-squared)
+PTSP_during <- TukeyHSD(anova.sp.during) #run Tukey's HSD post hoc test
+multcompLetters(PTSP_during$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+5.2) Graphics
+```{r}
+SpInt <- ddply(RS_during, .(Dose, Treatment), summarise, val = mean(Speed))
+SpplotDur <- ggplot(RS_during, aes(x = factor(Dose), y = Speed, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = SpInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = SpInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Speed (cm/s)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 12, label = "a")  +  annotate(geom = "text", x = 1.2, y = 14.5, label = "a")  + annotate(geom = "text", x = 1.8, y = 15, label = "a")  + annotate(geom = "text", x = 2.2, y = 12, label = "a") 
+```
+
+6) Join plots
+```{r}
+ggarrange(TTplotDur, TBplotDur, ESplotDur, FrplotDur, SpplotDur, labels = c("A", "B", "C", "D", "E"), common.legend = TRUE, legend = "bottom")
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for data after exposure
+
+1) Time on top
+1.1) Analysis
+```{r}
+anova.tt.after <- aov(TimeTop ~ Treatment + Dose + Treatment:Dose, data = RS_after) #run type I ANOVA
+summary(anova.tt.after) #summarize ANOVA results
+omega_sq(anova.tt.after) #Calculate effect size (omega-squared)
+cohens_f(anova.tt.after) #Calculate effect size (Cohen's f-squared)
+PTTT_after <- TukeyHSD(anova.tt.after) #run Tukey's HSD post hoc test
+multcompLetters(PTTT_after$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+1.2) Graphics
+```{r}
+TTInt <- ddply(RS_after, .(Dose, Treatment), summarise, val = mean(TimeTop))
+TTplotAfter <- ggplot(RS_after, aes(x = factor(Dose), y = TimeTop, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + ylim(0, 360) + geom_line(data = TTInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + geom_hline(yintercept = 120, linetype = "dashed", color = "gray") + labs(x = "Dose", y = "Time on top (s)", color = "Treatment") + scale_colour_brewer(palette = "Accent") + theme_bw() + annotate(geom = "text", x = 0.8, y = 140, label = "a")  +  annotate(geom = "text", x = 1.2, y = 155, label = "a")  + annotate(geom = "text", x = 1.8, y = 130, label = "a")  + annotate(geom = "text", x = 2.2, y = 135, label = "a") 
+```
+
+2) Time on bottom
+2.1) Analysis
+```{r}
+anova.tb.after <- aov(TimeBottom ~ Treatment + Dose + Treatment:Dose, data = RS_after) #run type I ANOVA
+summary(anova.tb.after) #summarize ANOVA results
+omega_sq(anova.tb.after) #Calculate effect size (omega-squared)
+cohens_f(anova.tb.after) #Calculate effect size (Cohen's f-squared)
+PTTB_after <- TukeyHSD(anova.tb.after) #run Tukey's HSD post hoc test
+multcompLetters(PTTB_after$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+2.2) Graphics
+```{r}
+TBInt <- ddply(RS_after, .(Dose, Treatment), summarise, val = mean(TimeBottom))
+TBplotAfter <- ggplot(RS_after, aes(x = factor(Dose), y = TimeBottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + ylim(0, 380) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + geom_hline(yintercept = 120, linetype = "dashed", color = "gray") + labs(x = "Drug", y = "Time on bottom (s)", color = "Treatment") + scale_colour_brewer(palette = "Accent") + theme_bw() + annotate(geom = "text", x = 0.8, y = 280, label = "ab")  +  annotate(geom = "text", x = 1.2, y = 370, label = "a")  + annotate(geom = "text", x = 1.8, y = 250, label = "b")  + annotate(geom = "text", x = 2.2, y = 260, label = "b") 
+```
+
+3) Erratic swimming
+3.1) Analysis
+```{r}
+anova.es.after <- aov(AbsoluteTurnAngle ~ Treatment + Dose + Treatment:Dose, data = RS_after) #run type I ANOVA
+summary(anova.es.after) #summarize ANOVA results
+omega_sq(anova.es.after) #Calculate effect size (omega-squared)
+cohens_f(anova.es.after) #Calculate effect size (Cohen's f-squared)
+PTES_after <- TukeyHSD(anova.es.after) #run Tukey's HSD post hoc test
+multcompLetters(PTES_after$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+3.2) Graphics
+```{r}
+ESInt <- ddply(RS_after, .(Dose, Treatment), summarise, val = mean(AbsoluteTurnAngle))
+ESplotAfter <- ggplot(RS_after, aes(x = factor(Dose), y = AbsoluteTurnAngle, colour = Treatment)) + ylim(0, 80) + geom_boxplot(outlier.shape = NA) + geom_point(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = ESInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Drug", y = "Erratic swimming \n(Abs. Turn Angle)", color = "Treatment") + scale_colour_brewer(palette = "Accent") + theme_bw() + annotate(geom = "text", x = 0.8, y = 35, label = "b")  +  annotate(geom = "text", x = 1.2, y = 65, label = "a")  + annotate(geom = "text", x = 1.8, y = 50, label = "b")  + annotate(geom = "text", x = 2.2, y = 80, label = "a")
+```
+
+4) Freezing
+4.1) Analysis
+```{r}
+anova.fr.after <- aov(Freezing ~ Treatment + Dose + Treatment:Dose, data = RS_after) #run type I ANOVA
+summary(anova.fr.after) #summarize ANOVA results
+omega_sq(anova.fr.after) #Calculate effect size (omega-squared)
+cohens_f(anova.fr.after) #Calculate effect size (Cohen's f-squared)
+PTFR_after <- TukeyHSD(anova.fr.after) #run Tukey's HSD post hoc test
+multcompLetters(PTFR_after$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+4.2) Graphics
+```{r}
+FrInt <- ddply(RS_after, .(Dose, Treatment), summarise, val = mean(Freezing))
+FrplotAfter <- ggplot(RS_after, aes(x = factor(Dose), y = Freezing, colour = Treatment)) + ylim (0, 360) + geom_boxplot(outlier.shape = NA) + geom_point(data = FrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = FrInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Freezing (s)", color = "Treatment") + scale_colour_brewer(palette = "Accent") + theme_bw() + annotate(geom = "text", x = 0.8, y = 50, label = "b")  +  annotate(geom = "text", x = 1.2, y = 240, label = "a")  + annotate(geom = "text", x = 1.8, y = 100, label = "b")  + annotate(geom = "text", x = 2.2, y = 170, label = "c") 
+```
+
+
+5) Speed
+5.1) Analysis
+```{r}
+anova.sp.after <- aov(Speed ~ Treatment + Dose + Treatment:Dose, data = RS_after) #run type I ANOVA
+summary(anova.sp.after) #summarize ANOVA results
+omega_sq(anova.sp.after) #Calculate effect size (omega-squared)
+cohens_f(anova.sp.after) #Calculate effect size (Cohen's f-squared)
+PTSP_after <- TukeyHSD(anova.sp.after) #run Tukey's HSD post hoc test
+multcompLetters(PTSP_after$`Treatment:Dose`[,'p adj']) #Visualize results from post-test as letters
+```
+
+5.2) Graphics
+```{r}
+SpInt <- ddply(RS_after, .(Dose, Treatment), summarise, val = mean(Speed))
+SpplotAfter <- ggplot(RS_after, aes(x = factor(Dose), y = Speed, colour = Treatment)) + ylim(0, 16) + geom_boxplot(outlier.shape = NA) + geom_point(data = SpInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_line(data = SpInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + labs(x = "Dose", y = "Speed (cm/s)", color = "Treatment") + scale_colour_brewer(palette = "Accent") + theme_bw() + annotate(geom = "text", x = 0.8, y = 12, label = "a")  +  annotate(geom = "text", x = 1.2, y = 15, label = "a")  + annotate(geom = "text", x = 1.8, y = 15, label = "a")  + annotate(geom = "text", x = 2.2, y = 12, label = "a")
+```
+
+6) Join plots
+```{r}
+ggarrange(TTplotAfter, TBplotAfter, ESplotAfter, FrplotAfter, SpplotAfter, labels = c("A", "B", "C", "D", "E"), common.legend = TRUE, legend = "bottom")
+```
