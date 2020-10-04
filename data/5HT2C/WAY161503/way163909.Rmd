@@ -63,6 +63,17 @@ if(!require(stats)){
     library(stats)
 }
 
+if(!require(sjtats)){
+    library(devtools)
+    devtools::install_github("strengejacke/sjstats")
+    library(sjtats)
+}
+
+if(!require(multcompView)){
+    install.packages("multcompView")
+    library(multcompView)
+}
+
 if(!require(ggpubr)){
     install.packages("ggpubr")
     library(ggpubr)
@@ -87,23 +98,23 @@ View(way_after)
 
 * Detect outliers (based on time on bottom during exposure) and remove them, using a 3.5xMAD rule
 ```{r}
-gA <- way_during[c(1:10), ]
-median(gA$Time.Bottom) + 3.5*mad(gA$Time.Bottom)
-median(gA$Time.Bottom) - 3.5*mad(gA$Time.Bottom)
+gA <- RS_during[c(1:10), ]
+median(gA$TimeBottom) + 3.5*mad(gA$TimeBottom)
+median(gA$TimeBottom) - 3.5*mad(gA$TimeBottom)
 #Subjects A2 and A16 identified as outlier; remove
 
-gB <- way_during[c(11:20), ]
-median(gB$Time.Bottom) + 3.5*mad(gB$Time.Bottom)
-median(gB$Time.Bottom) - 3.5*mad(gB$Time.Bottom)
+gB <- RS_during[c(11:30), ]
+median(gB$TimeBottom) + 3.5*mad(gB$TimeBottom)
+median(gB$TimeBottom) - 3.5*mad(gB$TimeBottom)
 
-gC <- way_during[c(21:30), ]
-median(gC$Time.Bottom) + 3.5*mad(gC$Time.Bottom)
-median(gC$Time.Bottom) - 3.5*mad(gC$Time.Bottom)
+gC <- RS_during[c(31:51), ]
+median(gC$TimeBottom) + 3.5*mad(gC$TimeBottom)
+median(gC$TimeBottom) - 3.5*mad(gC$TimeBottom)
 
 
-gD <- way_during[c(31:39), ]
-median(gD$Time.Bottom) + 3.5*mad(gD$Time.Bottom)
-median(gD$Time.Bottom) - 3.5*mad(gD$Time.Bottom)
+gD <- RS_during[c(52:72), ]
+median(gD$TimeBottom) + 3.5*mad(gD$TimeBottom)
+median(gD$TimeBottom) - 3.5*mad(gD$TimeBottom)
 #No outliers
 ```
 
@@ -140,7 +151,7 @@ multcompLetters(PTTB_during$`Treatment:Dose`[,'p adj']) #Visualize results from 
 2.2) Graphics
 ```{r}
 TBInt <- ddply(way_during, .(Dose, Treatment), summarise, val = mean(Time.Bottom))
-TBplotAfter <- ggplot(way_during, aes(x = factor(Dose), y = Time.Bottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + ylim(0, 380) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + geom_hline(yintercept = 120, linetype = "dashed", color = "gray") + labs(x = "Drug", y = "Time on bottom (s)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 340, label = "b")  +  annotate(geom = "text", x = 1.2, y = 370, label = "a")  + annotate(geom = "text", x = 1.8, y = 370, label = "b")  + annotate(geom = "text", x = 2.2, y = 370, label = "b") 
+TBplotDur <- ggplot(way_during, aes(x = factor(Dose), y = Time.Bottom, colour = Treatment)) + geom_boxplot(outlier.shape = NA) + geom_point(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + ylim(0, 380) + geom_line(data = TBInt, aes(y = val, group = Treatment), position = position_dodge(width = 0.75)) + geom_jitter(position = "dodge", alpha = 0.3) + geom_hline(yintercept = 120, linetype = "dashed", color = "gray") + labs(x = "Drug", y = "Time on bottom (s)", color = "Treatment") + scale_colour_brewer(palette = "Set1") + theme_bw() + annotate(geom = "text", x = 0.8, y = 340, label = "b")  +  annotate(geom = "text", x = 1.2, y = 370, label = "a")  + annotate(geom = "text", x = 1.8, y = 370, label = "b")  + annotate(geom = "text", x = 2.2, y = 370, label = "b") 
 ```
 
 3) Erratic swimming
