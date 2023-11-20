@@ -1,4 +1,4 @@
-Sujeito,Droga,Tratamento,Minuto,Tipo,TimeNearStimulus,AbsoluteTurnAngle,Speed,Freezing
+Subject,Drug,Treatment,Trial,Typo,TimeNearStimulus,AbsoluteTurnAngle,Speed,Freezing
 PC1,pCPA,CTRL,1,0,17.745567,24.6571756590909,7.60315768085106,1
 PC1,pCPA,CTRL,2,0,0.716667,31.2153103,5.58140841666667,0
 PC1,pCPA,CTRL,3,0,5.233333,30.3415311176471,5.51701277192983,0
