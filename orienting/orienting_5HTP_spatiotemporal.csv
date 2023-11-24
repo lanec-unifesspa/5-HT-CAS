@@ -1,4 +1,4 @@
-Subject,Drug,Treatment,Minute,Type,TimeNearStimulus,AbsoluteTurnAngle,Speed
+Subject,Drug,Treatment,Trial,Type,TimeNearStimulus,AbsoluteTurnAngle,Speed
 PC1,5HTP,CTRL,1,OFF,11,23.4309348135593,3.18135046666667
 PC1,5HTP,CTRL,2,OFF,19,20.1175926101695,3.05377718333333
 PC1,5HTP,CTRL,3,OFF,17,19.1925932586207,3.26128915
