@@ -1,4 +1,4 @@
-Subject,Drug,Treatment,TrialType,Rproj,Angle,EyeUse
+Subject,Drug,Treatment,Type,Rproj,Angle,EyeUse
 HC1,5HTP,CTRL,OFF,0.03,108.82325824031,0
 HC1,5HTP,CTRL,ON,-0.07,191.954661354182,R
 HC2,5HTP,CTRL,OFF,-0.18,328.279989851629,0
